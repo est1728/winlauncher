@@ -51,7 +51,7 @@ private fun DesktopIconCell(item: DesktopIconItem, textColor: Color, onOpen: () 
         modifier = Modifier
             .width(76.dp)
             .combinedClickable(
-                interactionSource = remember_ { },
+                interactionSource = remember_(),
                 indication = null,
                 onClick = {},          // แตะครั้งเดียว = แค่เลือก (ยังไม่เปิด) เหมือน Windows จริง
                 onDoubleClick = onOpen, // แตะสองครั้ง = เปิดจริง
