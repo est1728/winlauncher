@@ -7,7 +7,6 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-// สีโทน Windows 11 (Fluent Design)
 val Win11Blue = Color(0xFF0078D4)
 val Win11Desktop = Color(0xFF1E3A5F)
 val Win11TaskbarDark = Color(0xE6202020)
@@ -20,7 +19,12 @@ val Win11TextLight = Color(0xFF1B1B1B)
 val Win11TextDark = Color(0xFFF3F3F3)
 val Win11CloseRed = Color(0xFFE81123)
 
-/** ชุดสีของ "ธีมเดสก์ท็อป" ตอนรันจริง (แยกจาก MaterialTheme เพราะ taskbar/title bar คุมเองเพื่อให้เหมือน Windows เป๊ะ) */
+// สีพื้น "ไทล์" ไอคอนแอปบนเดสก์ท็อป ให้ไอคอนเด่นชัดบนวอลเปเปอร์ทุกแบบ
+val AppTileFileExplorer = Color(0xFFFFB900)
+val AppTileSettings = Color(0xFF5A5A5A)
+val AppTileNotepad = Color(0xFF3A8DFF)
+val AppTileCalculator = Color(0xFF2B2B2B)
+
 data class DesktopColors(
     val taskbar: Color,
     val windowTitleBar: Color,
