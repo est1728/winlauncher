@@ -1,11 +1,16 @@
 package com.example.winlauncher.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.*
@@ -18,6 +23,8 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -25,10 +32,6 @@ import com.example.winlauncher.ui.theme.DesktopColors
 import com.example.winlauncher.ui.theme.WallpaperPresets
 import com.example.winlauncher.ui.theme.desktopColorsFor
 
-/**
- * รากของ UI ทั้งหมด — เทียบเท่ากับ "หน้าจอ Windows" หลังล็อกอิน
- * คุมสถานะหลักของทั้งระบบไว้ที่นี่: วอลเปเปอร์ที่เลือก, โหมดมืด/สว่าง, หน้าต่างทั้งหมด
- */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DesktopScreen() {
@@ -37,19 +40,16 @@ fun DesktopScreen() {
     var showPersonalize by remember { mutableStateOf(false) }
     var showContextMenu by remember { mutableStateOf(false) }
 
-    // ---------- ธีม + วอลเปเปอร์ (ปรับได้จากแผง Personalize) ----------
     var selectedWallpaper by remember { mutableStateOf(WallpaperPresets.first()) }
     var isDarkMode by remember { mutableStateOf(selectedWallpaper.isDark) }
     val colors = desktopColorsFor(isDarkMode)
 
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         val desktopWidth: Dp = maxWidth
-        val desktopHeight: Dp = maxHeight - 52.dp // หัก taskbar ออก
+        val desktopHeight: Dp = maxHeight - 52.dp
 
-        // ---------- พื้นหลัง (วอลเปเปอร์) ----------
         WallpaperBackground(option = selectedWallpaper, modifier = Modifier.fillMaxSize())
 
-        // ---------- พื้นที่ว่างของเดสก์ท็อป: กดค้าง (นิ้ว) หรือคลิกขวา (เมาส์) เพื่อเปิดเมนู ----------
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -57,10 +57,9 @@ fun DesktopScreen() {
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = { showStartMenu = false; showContextMenu = false },
-                    onLongClick = { showContextMenu = true }, // กดค้างด้วยนิ้ว
+                    onLongClick = { showContextMenu = true },
                 )
                 .pointerInput(Unit) {
-                    // รองรับคลิกขวาจริงถ้ามีเมาส์ต่ออยู่ (Android ส่ง secondary button event มาให้)
                     awaitPointerEventScope {
                         while (true) {
                             val event = awaitPointerEvent()
@@ -72,14 +71,12 @@ fun DesktopScreen() {
                 }
         )
 
-        // ---------- ไอคอนเดสก์ท็อป ----------
         DesktopIconsGrid(
             icons = DefaultDesktopIcons,
             textColor = Color.White,
             onOpen = { item -> manager.openWindow(id = item.id, title = item.label) },
         )
 
-        // ---------- หน้าต่างทั้งหมดที่เปิดอยู่ ----------
         manager.windows.forEach { win ->
             DesktopWindow(
                 state = win,
@@ -88,11 +85,13 @@ fun DesktopScreen() {
                 desktopHeightDp = desktopHeight,
                 colors = colors,
             ) {
-                DemoWindowContent(title = win.title, textColor = colors.text)
+                when (win.id) {
+                    "File Explorer" -> FileExplorerApp(textColor = colors.text)
+                    else -> DemoWindowContent(title = win.title, textColor = colors.text)
+                }
             }
         }
 
-        // ---------- เมนูคลิกขวา/กดค้างบนพื้นเดสก์ท็อป ----------
         if (showContextMenu) {
             DesktopContextMenu(
                 onDismiss = { showContextMenu = false },
@@ -103,7 +102,6 @@ fun DesktopScreen() {
             )
         }
 
-        // ---------- แผง Personalize ----------
         if (showPersonalize) {
             Box(
                 modifier = Modifier
@@ -113,7 +111,7 @@ fun DesktopScreen() {
                     .pointerInput(Unit) { detectDismissTap { showPersonalize = false } },
                 contentAlignment = Alignment.Center,
             ) {
-                Box(modifier = Modifier.pointerInput(Unit) { /* กันแตะทะลุไปปิดตอนแตะข้างในแผง */ }) {
+                Box(modifier = Modifier.pointerInput(Unit) { }) {
                     PersonalizePanel(
                         currentWallpaper = selectedWallpaper,
                         isDarkMode = isDarkMode,
@@ -125,31 +123,23 @@ fun DesktopScreen() {
             }
         }
 
-        // ---------- Start Menu แบบง่าย ----------
         if (showStartMenu) {
-            SimpleStartMenu(
+            RealStartMenu(
                 colors = colors,
                 onDismiss = { showStartMenu = false },
-                onOpenApp = { appName ->
-                    manager.openWindow(id = appName, title = appName)
-                    showStartMenu = false
-                }
             )
         }
 
-        // ---------- Taskbar ด้านล่าง ----------
         Box(modifier = Modifier.align(Alignment.BottomCenter).zIndex(1000f)) {
             Taskbar(manager = manager, colors = colors, onStartClick = { showStartMenu = !showStartMenu })
         }
     }
 }
 
-/** ตรวจจับแตะเพื่อปิด overlay (ใช้กับพื้นหลังโปร่งของ dialog ต่างๆ) */
 private suspend fun PointerInputScope.detectDismissTap(onDismiss: () -> Unit) {
     detectTapGestures { onDismiss() }
 }
 
-/** เมนูที่เด้งขึ้นมาตอนกดค้าง/คลิกขวาบนพื้นเดสก์ท็อป — คล้ายเมนู Personalize ของ Windows */
 @Composable
 private fun DesktopContextMenu(onDismiss: () -> Unit, onPersonalize: () -> Unit) {
     Box(modifier = Modifier.fillMaxSize().zIndex(2500f)) {
@@ -183,7 +173,6 @@ private fun ContextMenuItem(label: String, onClick: () -> Unit) {
     )
 }
 
-/** เนื้อหาตัวอย่างในหน้าต่าง ไว้ทดสอบว่าลาก/ย่อ/ขยายทำงานถูกต้อง */
 @Composable
 private fun DemoWindowContent(title: String, textColor: Color) {
     SelectionContainer {
@@ -193,19 +182,17 @@ private fun DemoWindowContent(title: String, textColor: Color) {
             Text(text = "ลองลากแถบหัวด้านบนเพื่อย้ายตำแหน่ง", color = textColor)
             Text(text = "ลองลากมุมขวาล่างเพื่อปรับขนาด", color = textColor)
             Text(text = "กดปุ่มมุมขวาบนเพื่อย่อ/ขยาย/ปิด", color = textColor)
-            Text(text = "กดค้างพื้นเดสก์ท็อป (หรือคลิกขวาถ้ามีเมาส์) เพื่อเปลี่ยนวอลเปเปอร์/ธีม", color = textColor)
         }
     }
 }
 
-/** เมนู Start แบบง่าย — รายชื่อ "แอป" ตัวอย่างที่กดแล้วเปิดเป็นหน้าต่างใหม่ */
 @Composable
-private fun SimpleStartMenu(
+private fun RealStartMenu(
     colors: DesktopColors,
     onDismiss: () -> Unit,
-    onOpenApp: (String) -> Unit,
 ) {
-    val demoApps = listOf("File Explorer", "Settings", "Notepad", "Calculator")
+    val context = LocalContext.current
+    val apps = remember { loadInstalledApps(context) }
 
     Box(modifier = Modifier.fillMaxSize().zIndex(2000f)) {
         Box(
@@ -217,22 +204,48 @@ private fun SimpleStartMenu(
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(start = 8.dp, bottom = 60.dp)
-                .width(260.dp)
+                .width(320.dp)
+                .heightIn(max = 420.dp)
                 .clip(RoundedCornerShape(8.dp))
                 .background(colors.windowBody)
                 .padding(12.dp)
         ) {
-            Text(text = "แอปทั้งหมด", style = MaterialTheme.typography.titleSmall, color = colors.text)
+            Text(
+                text = "แอปทั้งหมด (${apps.size})",
+                style = MaterialTheme.typography.titleSmall,
+                color = colors.text,
+            )
             Spacer(modifier = Modifier.height(8.dp))
-            demoApps.forEach { app ->
-                Text(
-                    text = app,
-                    color = colors.text,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .combinedClickable(onClick = { onOpenApp(app) })
-                        .padding(vertical = 10.dp)
-                )
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(4),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                items(apps) { app ->
+                    Column(
+                        modifier = Modifier
+                            .clickable {
+                                launchApp(context, app.packageName)
+                                onDismiss()
+                            }
+                            .padding(6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Image(
+                            bitmap = app.icon,
+                            contentDescription = app.label,
+                            modifier = Modifier.size(40.dp),
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = app.label,
+                            color = colors.text,
+                            style = MaterialTheme.typography.labelSmall,
+                            maxLines = 1,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
             }
         }
     }
