@@ -1,0 +1,5 @@
+.bash_history
+build/
+.gradle/
+local.properties
+*.iml

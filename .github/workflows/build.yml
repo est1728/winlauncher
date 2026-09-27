@@ -1,0 +1,35 @@
+name: Build APK
+
+# รันอัตโนมัติทุกครั้งที่ push โค้ดขึ้น branch main
+# หรือกดรันเองได้จากแท็บ Actions (workflow_dispatch)
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ดึงโค้ดจาก repo
+        uses: actions/checkout@v4
+
+      - name: ติดตั้ง Java 17 (Gradle ต้องใช้)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: ติดตั้ง Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+
+      - name: Build APK (debug)
+        run: gradle assembleDebug --no-daemon
+
+      - name: อัปโหลดไฟล์ .apk ให้ดาวน์โหลด
+        uses: actions/upload-artifact@v4
+        with:
+          name: WinLauncher-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk

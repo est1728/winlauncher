@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:allowBackup="true"
+        android:label="WinLauncher"
+        android:theme="@style/Theme.WinLauncher"
+        android:supportsRtl="true">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+
+                <!--
+                  เมื่อพร้อมตั้งเป็น "หน้าจอเริ่มต้น" ของแท็บเล็ต (default launcher)
+                  ให้เปิดใช้ 2 บรรทัดนี้ (ตอนนี้ปิดไว้ก่อน เพื่อทดสอบเป็นแอปธรรมดาก่อน):
+
+                  <action android:name="android.intent.action.HOME" />
+                  <category android:name="android.intent.category.HOME" />
+                  <category android:name="android.intent.category.DEFAULT" />
+                -->
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
